@@ -28,7 +28,7 @@
     .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--dark-border);background:var(--dark-bg);color:white}
     .btn-publish{width:100%;padding:12px;background:var(--primary-600);color:white;border:none;border-radius:var(--radius-sm);font-weight:700;cursor:pointer}
 
-    /* Tableau du Planning sans colonne TYPE */
+    /* Tableau : JOUR | ACTIVITÉ | HEURE */
     .table-container{background:var(--dark-card);border-radius:var(--radius-md);border:1px solid var(--dark-border);overflow:hidden;box-shadow:var(--shadow-soft)}
     .table-title{padding:15px 20px;background:var(--dark-surface);border-bottom:1px solid var(--dark-border);font-size:1.1rem;color:var(--primary-500)}
     table{width:100%;border-collapse:collapse;text-align:left}
@@ -71,7 +71,7 @@
         </div>
         <div class="form-group">
           <label for="inputHour">Horaire :</label>
-          <input type="text" id="inputHour" placeholder="Ex: 16h00 - 18h00">
+          <input type="text" id="inputHour" placeholder="Ex: 16h30 à 18h30">
         </div>
         <button type="submit" class="btn-publish">Mettre à jour ce jour</button>
       </form>
@@ -89,7 +89,7 @@
           </tr>
         </thead>
         <tbody id="scheduleBody">
-          <!-- Données affichées ici par JavaScript -->
+          <!-- Données affichées ici par JS -->
         </tbody>
       </table>
     </section>
@@ -105,10 +105,11 @@
 
       let isLoggedIn = false;
 
+      // Données exactes selon votre capture sans la colonne TYPE
       let defaultSchedule = [
         { day: "Lundi", activity: "Intercession", hour: "À préciser" },
         { day: "Mardi", activity: "Répétition", hour: "À préciser" },
-        { day: "Mercredi", activity: "Culte de Semaine", hour: "16h00 - 18h00" },
+        { day: "Mercredi", activity: "Cultes", hour: "16h30 à 18h30" },
         { day: "Jeudi", activity: "Répétition", hour: "À préciser" },
         { day: "Vendredi", activity: "Culte d'Enseignement / Prière", hour: "16h00 - 18h00" },
         { day: "Samedi", activity: "Répétition Générale", hour: "À partir de 15h00" },
