@@ -22,20 +22,19 @@
     .header-card{background:var(--dark-surface);border:1px solid var(--dark-border);border-radius:var(--radius-md);padding:25px;text-align:center}
     .header-card h1{color:var(--primary-500);font-size:2rem;margin-bottom:8px}
 
-    .temoignage-card{background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-md);padding:20px}
-    .compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-top:15px}
-    .compare-box img{width:100%;height:300px;object-fit:cover;border-radius:8px}
-
     .admin-only{display:none;background:var(--dark-surface);border:2px dashed var(--primary-500);border-radius:var(--radius-md);padding:20px;margin-bottom:20px}
     .form-group{margin-bottom:12px}
     .form-group label{display:block;font-size:0.85rem;color:var(--text-muted);margin-bottom:4px}
-    .form-group input,.form-group textarea{width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--dark-border);background:var(--dark-bg);color:white}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--dark-border);background:var(--dark-bg);color:white}
     .btn-publish{width:100%;padding:12px;background:var(--primary-600);color:white;border:none;border-radius:var(--radius-sm);font-weight:700;cursor:pointer}
 
-    .tiktok-scroll-wrapper{width:100%;max-width:380px;height:550px;margin:0 auto;overflow-y:scroll;scroll-snap-type:y mandatory;border-radius:var(--radius-md);border:2px solid var(--primary-500);background:#000}
-    .tiktok-slide{width:100%;height:100%;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;justify-content:flex-end}
-    .tiktok-slide img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
-    .tiktok-overlay{position:relative;z-index:2;background:linear-gradient(transparent,rgba(0,0,0,0.9));padding:20px}
+    /* Table Planning */
+    .table-container{background:var(--dark-card);border-radius:var(--radius-md);border:1px solid var(--dark-border);overflow:hidden;box-shadow:var(--shadow-soft)}
+    .table-title{padding:15px 20px;background:var(--dark-surface);border-bottom:1px solid var(--dark-border);font-size:1.1rem;color:var(--primary-500)}
+    table{width:100%;border-collapse:collapse;text-align:left}
+    th,td{padding:14px 18px;border-bottom:1px solid var(--dark-border)}
+    th{background:var(--primary-700);color:white;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px}
+    tr:last-child td{border-bottom:none}tr:nth-child(even){background-color:rgba(255,255,255,.02)}
   </style>
 </head>
 <body>
@@ -45,120 +44,139 @@
       <button id="authBtn" class="btn-auth">🔒 Accès Administrateur</button>
     </div>
 
-    <!-- Titre mis à jour en direct -->
     <header class="header-card">
-      <h1 id="siteTitle">Chargement...</h1>
-      <p id="siteBio">Chargement...</p>
+      <h1 id="siteTitle">Église Nouvelle Alliance</h1>
+      <p id="siteBio">Une nouvelle alliance, une nouvelle vie en Christ.</p>
     </header>
 
-    <!-- Zone d'administration -->
+    <!-- Zone d'administration (Modifiée sans la case Type) -->
     <div id="adminPanel" class="admin-only">
-      <h2>⚙️ Panneau Administrateur (Modifications en direct)</h2>
-      <div class="form-group">
-        <label>Titre de l'Église :</label>
-        <input type="text" id="inputSiteTitle">
-      </div>
-      <div class="form-group">
-        <label>Description / Verset :</label>
-        <textarea id="inputSiteBio"></textarea>
-      </div>
-      <button id="saveConfigBtn" class="btn-publish">Enregistrer pour TOUS les visiteurs</button>
+      <h2>📅 Modification du Planning des Cultes</h2>
+      <form id="scheduleForm">
+        <div class="form-group">
+          <label for="selectDay">Sélectionner le jour :</label>
+          <select id="selectDay">
+            <option value="0">Lundi</option>
+            <option value="1">Mardi</option>
+            <option value="2">Mercredi</option>
+            <option value="3">Jeudi</option>
+            <option value="4">Vendredi</option>
+            <option value="5">Samedi</option>
+            <option value="6">Dimanche</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inputActivity">Nom de l'activité :</label>
+          <input type="text" id="inputActivity" placeholder="Ex: Culte de Semaine">
+        </div>
+        <div class="form-group">
+          <label for="inputHour">Horaire :</label>
+          <input type="text" id="inputHour" placeholder="Ex: 16h00 - 18h00">
+        </div>
+        <button type="submit" class="btn-publish">Mettre à jour ce jour</button>
+      </form>
     </div>
 
-    <!-- Photos Témoignage -->
-    <section class="temoignage-card">
-      <h2 style="color: var(--primary-500); text-align:center;">✨ Témoignage de Guérison (Cameroun)</h2>
-      <div class="compare-grid">
-        <div class="compare-box">
-          <p style="text-align:center; font-weight:bold; margin-bottom:5px;">AVANT</p>
-          <img src="avant.jpg" alt="Avant" onerror="this.src='https://picsum.photos/400/500?random=1'">
-        </div>
-        <div class="compare-box">
-          <p style="text-align:center; font-weight:bold; color:#10b981; margin-bottom:5px;">APRÈS</p>
-          <img src="apres.jpg" alt="Après" onerror="this.src='https://picsum.photos/400/500?random=2'">
-        </div>
-      </div>
+    <!-- Planning des Cultes (Tableau simplifié sans la colonne Type) -->
+    <section class="table-container">
+      <div class="table-title"><strong>Planning des Activités & Cultes</strong></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Jour</th>
+            <th>Activité</th>
+            <th>Heure</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody">
+          <!-- Données chargées dynamiquement -->
+        </tbody>
+      </table>
     </section>
-
-    <!-- Fil d'actualité mis à jour en direct -->
-    <div class="tiktok-scroll-wrapper" id="tiktokFeed">
-      <!-- Les annonces s'affichent ici en temps réel -->
-    </div>
   </div>
 
-  <!-- Ingestion des scripts Firebase Realtime Database -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
   <script>
-    // 1. CONFIGURATION DE VOTRE BASE DE DONNÉES FIREBASE
-    // (Remplacez ces infos avec vos identifiants Firebase gratuits créés sur console.firebase.google.com)
-    const firebaseConfig = {
-      apiKey: "VOTRE_API_KEY",
-      authDomain: "votre-projet.firebaseapp.com",
-      databaseURL: "https://votre-projet-default-rtdb.firebaseio.com",
-      projectId: "votre-projet",
-      storageBucket: "votre-projet.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef"
-    };
+    (function(){
+      const ADMIN_PASSWORD = "1234"; 
+      const authBtn = document.getElementById('authBtn');
+      const adminPanel = document.getElementById('adminPanel');
+      const scheduleForm = document.getElementById('scheduleForm');
+      const scheduleBody = document.getElementById('scheduleBody');
 
-    // Initialisation
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+      let isLoggedIn = false;
 
-    // Elements du DOM
-    const authBtn = document.getElementById('authBtn');
-    const adminPanel = document.getElementById('adminPanel');
-    const siteTitle = document.getElementById('siteTitle');
-    const siteBio = document.getElementById('siteBio');
-    const inputSiteTitle = document.getElementById('inputSiteTitle');
-    const inputSiteBio = document.getElementById('inputSiteBio');
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
+      // Structure des données simplifiée (sans la propriété 'type')
+      let defaultSchedule = [
+        { day: "Lundi", activity: "Intercession", hour: "À préciser" },
+        { day: "Mardi", activity: "Répétition", hour: "À préciser" },
+        { day: "Mercredi", activity: "Culte de Semaine", hour: "16h00 - 18h00" },
+        { day: "Jeudi", activity: "Répétition", hour: "À préciser" },
+        { day: "Vendredi", activity: "Culte d'Enseignement / Prière", hour: "16h00 - 18h00" },
+        { day: "Samedi", activity: "Répétition Générale", hour: "À partir de 15h00" },
+        { day: "Dimanche", activity: "Grand Culte Dominical", hour: "08h00 - 12h00" }
+      ];
 
-    let isAdmin = false;
+      renderSchedule();
 
-    // 2. ÉCOUTE EN TEMPS RÉEL (Pour TOUS les visiteurs)
-    // Dès que vous modifiez dans Firebase, TOUS les téléphones se mettent à jour INSTANTANÉMENT
-    db.ref('siteConfig').on('value', (snapshot) => {
-      const data = snapshot.val();
-      if(data) {
-        siteTitle.textContent = data.title || "Église Nouvelle Alliance";
-        siteBio.textContent = data.bio || "Bienvenue !";
-      }
-    });
-
-    // 3. CODE ADMINISTRATEUR
-    authBtn.addEventListener('click', () => {
-      if(!isAdmin) {
-        const pass = prompt("Mot de passe Administrateur :");
-        if(pass === "1234") {
-          isAdmin = true;
-          adminPanel.style.display = 'block';
-          authBtn.textContent = "🔓 Déconnexion";
-          authBtn.classList.add('logout');
-          inputSiteTitle.value = siteTitle.textContent;
-          inputSiteBio.value = siteBio.textContent;
-        } else if(pass !== null) {
-          alert("Mot de passe incorrect.");
+      authBtn.addEventListener('click', function(){
+        if(!isLoggedIn){
+          const pass = prompt("Saisissez le mot de passe Administrateur :");
+          if(pass === ADMIN_PASSWORD){
+            isLoggedIn = true;
+            adminPanel.style.display = 'block';
+            authBtn.textContent = "🔓 Déconnexion Admin";
+            authBtn.classList.add('logout');
+          } else if(pass !== null){
+            alert("Mot de passe incorrect.");
+          }
+        } else {
+          isLoggedIn = false;
+          adminPanel.style.display = 'none';
+          authBtn.textContent = "🔒 Accès Administrateur";
+          authBtn.classList.remove('logout');
         }
-      } else {
-        isAdmin = false;
-        adminPanel.style.display = 'none';
-        authBtn.textContent = "🔒 Accès Administrateur";
-        authBtn.classList.remove('logout');
-      }
-    });
-
-    // 4. ENREGISTREMENT ET ENVOI À TOUT LE MONDE
-    saveConfigBtn.addEventListener('click', () => {
-      db.ref('siteConfig').set({
-        title: inputSiteTitle.value,
-        bio: inputSiteBio.value
-      }).then(() => {
-        alert("Modifications publiées pour TOUS les visiteurs en direct !");
       });
-    });
+
+      scheduleForm.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        const dayIdx = parseInt(document.getElementById('selectDay').value, 10);
+        const activity = document.getElementById('inputActivity').value.trim();
+        const hour = document.getElementById('inputHour').value.trim();
+
+        if(!activity || !hour){
+          alert("Veuillez remplir l'activité et l'horaire.");
+          return;
+        }
+
+        let currentSchedule = getScheduleData();
+        currentSchedule[dayIdx].activity = activity;
+        currentSchedule[dayIdx].hour = hour;
+
+        localStorage.setItem('siteSchedule', JSON.stringify(currentSchedule));
+        renderSchedule();
+        alert("Planning mis à jour pour " + currentSchedule[dayIdx].day + " !");
+      });
+
+      function getScheduleData(){
+        const saved = localStorage.getItem('siteSchedule');
+        return saved ? JSON.parse(saved) : defaultSchedule;
+      }
+
+      function renderSchedule(){
+        const data = getScheduleData();
+        scheduleBody.innerHTML = '';
+        data.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${item.day}</strong></td>
+            <td>${item.activity}</td>
+            <td>${item.hour}</td>
+          `;
+          scheduleBody.appendChild(tr);
+        });
+      }
+    })();
   </script>
 </body>
 </html>
