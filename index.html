@@ -846,6 +846,257 @@
   }
 
 })();
-  </script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+(function(){
+  // Connexion au serveur WebSockets Render
+  const socket = io("https://backend-lxod.onrender.com");
+
+  // Mot de passe configuré sur 099360
+  const ADMIN_PASSWORD = "099360"; 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB max
+
+  const authBtn = document.getElementById('authBtn');
+  const adminPanel = document.getElementById('adminPanel');
+  const settingsForm = document.getElementById('settingsForm');
+  const scheduleForm = document.getElementById('scheduleForm');
+  const uploadForm = document.getElementById('uploadForm');
+  const authorSelect = document.getElementById('authorSelect');
+  const descriptionInput = document.getElementById('descriptionInput');
+  const fileInput = document.getElementById('fileInput');
+  const tiktokFeed = document.getElementById('tiktokFeed');
+  const scheduleBody = document.getElementById('scheduleBody');
+  const onlineCountEl = document.getElementById('onlineCount');
+
+  let isLoggedIn = false;
+
+  let defaultSchedule = [
+    { day: "Lundi", activity: "Intercession", hour: "À préciser" },
+    { day: "Mardi", activity: "Répétition", hour: "À préciser" },
+    { day: "Mercredi", activity: "Cultes", hour: "16h30 à 18h30" },
+    { day: "Jeudi", activity: "Répétition", hour: "À préciser" },
+    { day: "Vendredi", activity: "Culte d'Enseignement / Prière", hour: "16h00 - 18h00" },
+    { day: "Samedi", activity: "Répétition Générale", hour: "À partir de 15h00" },
+    { day: "Dimanche", activity: "Grand Culte Dominical", hour: "08h00 - 12h00" }
+  ];
+
+  function showToast(message, type = 'success'){
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type === 'error' ? 'toast--error' : 'toast--success');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(()=> { toast.style.opacity = '0'; }, 2600);
+    setTimeout(()=> { toast.remove(); }, 3000);
+  }
+
+  loadSettings();
+  renderSchedule();
+
+  // Écoute du nombre d'utilisateurs connectés
+  socket.on("users:count", (count) => {
+    if (onlineCountEl) onlineCountEl.innerText = count;
+  });
+
+  // Écoute des mises à jour des réglages et du planning
+  socket.on("client:update", (data) => {
+    if(data.type === 'settings') {
+      applySettings(data.payload);
+    } else if(data.type === 'schedule') {
+      localStorage.setItem('siteSchedule', JSON.stringify(data.payload));
+      renderSchedule();
+    }
+  });
+
+  // Écoute des nouvelles photos publiées en temps réel
+  socket.on("client:new_post", (postData) => {
+    ajouterPhotoAuFil(postData.author, postData.description, postData.imageSrc, postData.time);
+  });
+
+  function ajouterPhotoAuFil(author, description, imageSrc, timeString){
+    const slide = document.createElement('div');
+    slide.className = 'tiktok-slide';
+
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.alt = 'Publication';
+    img.loading = 'lazy';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tiktok-overlay';
+
+    if (author && author !== '') {
+      const h3 = document.createElement('h3');
+      h3.textContent = author;
+      overlay.appendChild(h3);
+    }
+
+    const p = document.createElement('p');
+    if(description && description.length > 0){
+      const parts = description.split(/\r?\n/);
+      parts.forEach((line, idx) => {
+        p.appendChild(document.createTextNode(line));
+        if(idx < parts.length - 1) p.appendChild(document.createElement('br'));
+      });
+    }
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time-badge';
+    timeSpan.textContent = 'Publié à ' + timeString;
+
+    overlay.appendChild(p);
+    overlay.appendChild(timeSpan);
+
+    slide.appendChild(img);
+    slide.appendChild(overlay);
+
+    tiktokFeed.insertBefore(slide, tiktokFeed.firstChild);
+    tiktokFeed.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Vérification du mot de passe (099360)
+  authBtn.addEventListener('click', function(){
+    if(!isLoggedIn){
+      const pass = prompt("Saisissez le mot de passe Administrateur :");
+      if(pass === ADMIN_PASSWORD){
+        isLoggedIn = true;
+        adminPanel.style.display = 'block';
+        authBtn.textContent = "🔓 Déconnexion Admin";
+        authBtn.classList.add('logout');
+        showToast("Accès administrateur déverrouillé.");
+      } else if(pass !== null){
+        showToast("Mot de passe incorrect.", "error");
+      }
+    } else {
+      isLoggedIn = false;
+      adminPanel.style.display = 'none';
+      authBtn.textContent = "🔒 Accès Administrateur";
+      authBtn.classList.remove('logout');
+      showToast("Déconnecté.");
+    }
+  });
+
+  // Envoi de photo
+  uploadForm.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const author = (authorSelect.value || '').trim();
+    const description = (descriptionInput.value || '').trim();
+    const file = fileInput.files && fileInput.files[0];
+
+    if(!file){
+      showToast('Veuillez sélectionner une image.', 'error');
+      return;
+    }
+    if(file.size > MAX_FILE_SIZE){
+      showToast('Image trop volumineuse (max 5 MB).', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const imageBase64 = evt.target.result;
+      const now = new Date();
+      const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+      const payload = {
+        author: author,
+        description: description,
+        imageSrc: imageBase64,
+        time: timeStr
+      };
+
+      socket.emit("admin:new_post", payload);
+
+      descriptionInput.value = '';
+      try { fileInput.value = ''; } catch(err){}
+      showToast('Photo publiée avec succès !');
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  // Gestion des paramètres et du planning
+  settingsForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const settingsData = {
+      title: document.getElementById('inputSiteTitle').value,
+      bio: document.getElementById('inputSiteBio').value,
+      verse: document.getElementById('inputSiteVerse').value,
+      admin: document.getElementById('inputAdminName').value,
+      annonces: document.getElementById('inputAnnoncesName').value
+    };
+    applySettings(settingsData);
+    saveSettingsToStorage(settingsData);
+    socket.emit("admin:update", { type: 'settings', payload: settingsData });
+    showToast("Paramètres généraux mis à jour !");
+  });
+
+  scheduleForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const dayIdx = parseInt(document.getElementById('selectDay').value, 10);
+    const activity = document.getElementById('inputActivity').value.trim();
+    const hour = document.getElementById('inputHour').value.trim();
+    if(!activity || !hour){
+      showToast("Veuillez remplir l'activité et l'horaire.", "error");
+      return;
+    }
+    let currentSchedule = getScheduleData();
+    currentSchedule[dayIdx].activity = activity;
+    currentSchedule[dayIdx].hour = hour;
+    localStorage.setItem('siteSchedule', JSON.stringify(currentSchedule));
+    renderSchedule();
+    socket.emit("admin:update", { type: 'schedule', payload: currentSchedule });
+    showToast("Planning mis à jour pour " + currentSchedule[dayIdx].day + " !");
+  });
+
+  function getScheduleData(){
+    const saved = localStorage.getItem('siteSchedule');
+    return saved ? JSON.parse(saved) : defaultSchedule;
+  }
+
+  function renderSchedule(){
+    const data = getScheduleData();
+    scheduleBody.innerHTML = '';
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><strong>${item.day}</strong></td><td>${item.activity}</td><td>${item.hour}</td>`;
+      scheduleBody.appendChild(tr);
+    });
+  }
+
+  function applySettings(data){
+    if(data.title) document.getElementById('siteTitle').innerText = data.title;
+    if(data.bio) document.getElementById('siteBio').innerText = data.bio;
+    if(data.verse) document.getElementById('siteVerse').innerText = data.verse;
+    if(data.admin) document.getElementById('adminName').innerText = data.admin;
+    if(data.annonces) document.getElementById('annoncesName').innerText = data.annonces;
+  }
+
+  function saveSettingsToStorage(data){
+    localStorage.setItem('siteTitle', data.title);
+    localStorage.setItem('siteBio', data.bio);
+    localStorage.setItem('siteVerse', data.verse);
+    localStorage.setItem('adminName', data.admin);
+    localStorage.setItem('annoncesName', data.annonces);
+  }
+
+  function loadSettings(){
+    const data = {
+      title: localStorage.getItem('siteTitle'),
+      bio: localStorage.getItem('siteBio'),
+      verse: localStorage.getItem('siteVerse'),
+      admin: localStorage.getItem('adminName'),
+      annonces: localStorage.getItem('annoncesName')
+    };
+    applySettings(data);
+    if(data.title) document.getElementById('inputSiteTitle').value = data.title;
+    if(data.bio) document.getElementById('inputSiteBio').value = data.bio;
+    if(data.verse) document.getElementById('inputSiteVerse').value = data.verse;
+    if(data.admin) document.getElementById('inputAdminName').value = data.admin;
+    if(data.annonces) document.getElementById('inputAnnoncesName').value = data.annonces;
+  }
+
+})();
+</script>
 </body>
 </html>
