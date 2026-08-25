@@ -1116,5 +1116,24 @@
 
 })();
 </script>
+  <!-- Chargement de la bibliothèque Socket.IO -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <script>
+    // ⬇️ PLACEZ LA LIGNE ICI ⬇️
+    const socket = io("https://votre-backend.onrender.com");
+
+    // Exemple de gestion de la connexion
+    socket.on("connect", () => {
+      console.log("Connecté au serveur Socket.IO avec l'ID :", socket.id);
+    });
+
+    socket.on("users:count", (count) => {
+      console.log("Nombre d'utilisateurs en ligne :", count);
+      // Mettre à jour l'affichage sur la page si vous avez un élément HTML dédié
+    });
+  </script>
+</body>
+</html>
 </body>
 </html>
