@@ -46,6 +46,28 @@
     .card-resp h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:4px}
     .card-resp p{font-size:1.15rem;font-weight:700;color:var(--text-main)}
 
+    /* Section Témoignage "Avant / Après" (Visible par TOUS) */
+    .temoignage-card{
+      background:var(--dark-card);border:1px solid var(--dark-border);border-radius:var(--radius-md);padding:25px 20px;box-shadow:var(--shadow-soft);
+    }
+    .temoignage-card h2{color:var(--primary-500);font-size:1.4rem;text-align:center;margin-bottom:6px}
+    .temoignage-card p.subtitle{color:var(--text-muted);text-align:center;font-size:0.9rem;margin-bottom:20px}
+    
+    .compare-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:15px;
+    }
+    .compare-box{
+      background:var(--dark-surface);border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--dark-border);text-align:center;position:relative;
+    }
+    .compare-box img{
+      width:100%;height:320px;object-fit:cover;display:block;
+    }
+    .compare-tag{
+      position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.75);color:#fff;padding:4px 12px;border-radius:15px;font-size:0.8rem;font-weight:700;border:1px solid var(--primary-500);
+    }
+    .compare-tag.apres{border-color:#10b981;color:#10b981}
+    .compare-caption{padding:12px;font-size:0.9rem;color:var(--text-main)}
+
     /* Bloc Administrateur (Masqué par défaut) */
     .admin-only{display:none}
 
@@ -137,7 +159,31 @@
       </div>
     </section>
 
-    <!-- ZONE ADMINISTRATEUR RESERVEE (Déverrouillée uniquement par mot de passe) -->
+    <!-- SECTION TEMOIGNAGE "AVANT / APRÈS" (PUBLIC : Visible par tous les visiteurs) -->
+    <section class="temoignage-card">
+      <h2>✨ Témoignage de Guérison & Mission (Cameroun)</h2>
+      <p class="subtitle">Action de grâce pour la restauration de la santé et l'accompagnement des jumelles.</p>
+      
+      <div class="compare-grid">
+        <!-- Photo AVANT -->
+        <div class="compare-box">
+          <span class="compare-tag">AVANT</span>
+          <!-- Remplacez 'avant.jpg' par le nom de votre photo -->
+          <img src="avant.jpg" alt="État de la peau Avant" onerror="this.src='https://picsum.photos/400/500?random=10'">
+          <div class="compare-caption">Atteinte par la maladie de la peau</div>
+        </div>
+
+        <!-- Photo APRÈS -->
+        <div class="compare-box">
+          <span class="compare-tag apres">APRÈS (Restauration)</span>
+          <!-- Remplacez 'apres.jpg' par le nom de votre photo -->
+          <img src="apres.jpg" alt="État de la peau Après" onerror="this.src='https://picsum.photos/400/500?random=11'">
+          <div class="compare-caption">Guérison et délivrance accomplie au Cameroun</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZONE ADMINISTRATEUR RESERVEE (Déverrouillée uniquement par mot de passe 1234) -->
     <div id="adminPanel" class="admin-only">
       
       <!-- 1. Modification des Réglages du Site -->
@@ -278,7 +324,7 @@
       </table>
     </section>
 
-    <!-- Profil TikTok Officiel (Bouton d'accès direct sans blocage) -->
+    <!-- Profil TikTok Officiel -->
     <section class="tiktok-official-card">
       <h2>Profil TikTok Officiel de l'Église</h2>
       <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
