@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Église Nouvelle Alliance - Plateforme Officielle & Administration</title>
+  
+  <!-- Intégration de Socket.io pour la connexion au serveur Render -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
   <style>
     :root{
       --primary-50:#f0f9ff;--primary-100:#e0f2fe;--primary-500:#0ea5e9;--primary-600:#0284c7;--primary-700:#0369a1;--primary-900:#0c4a6e;
@@ -21,8 +25,14 @@
     }
     .app-container{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
 
-    /* Barre d'accès Administrateur */
-    .auth-bar{display:flex;justify-content:flex-end;margin-bottom:-10px}
+    /* Barre d'accès Administrateur & Compteur */
+    .auth-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:-10px}
+    .online-badge{
+      background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);
+      padding:6px 14px;border-radius:20px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:8px;
+    }
+    .online-dot{width:8px;height:8px;background-color:#10b981;border-radius:50%;display:inline-block;box-shadow:0 0 8px #10b981}
+    
     .btn-auth{background:var(--primary-700);color:white;border:none;padding:10px 18px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;transition:background .2s}
     .btn-auth:hover{background:var(--primary-600)}
     .btn-auth.logout{background:#e11d48}
@@ -108,7 +118,7 @@
     .tiktok-overlay p{font-size:.9rem;color:#f1f5f9;line-height:1.4;white-space:pre-wrap}
     .tiktok-overlay .time-badge{font-size:.75rem;color:var(--text-muted);margin-top:8px;display:block}
 
-    /* Table Planning (Sans colonne TYPE) */
+    /* Table Planning */
     .table-container{background:var(--dark-card);border-radius:var(--radius-md);border:1px solid var(--dark-border);overflow:hidden;box-shadow:var(--shadow-soft)}
     .table-title{padding:15px 20px;background:var(--dark-surface);border-bottom:1px solid var(--dark-border);font-size:1.1rem;color:var(--primary-500)}
     table{width:100%;border-collapse:collapse;text-align:left}
@@ -133,8 +143,12 @@
 <body>
   <div class="app-container">
 
-    <!-- Bouton pour ouvrir l'Espace Administrateur -->
+    <!-- Barre supérieure : Compteur de personnes en ligne + Accès Admin -->
     <div class="auth-bar">
+      <div class="online-badge">
+        <span class="online-dot"></span>
+        <span id="onlineCount">1</span> personne(s) en ligne
+      </div>
       <button id="authBtn" class="btn-auth">🔒 Accès Administrateur</button>
     </div>
 
@@ -149,11 +163,11 @@
     <section class="responsables-grid" aria-label="Responsables">
       <div class="card-resp admin-border">
         <h3>Administrateur Principal</h3>
-        <p id="adminName">Prophète Victor</p>
+        <p id="adminName">Prophète Victoire</p>
       </div>
       <div class="card-resp annonces-border">
         <h3>Responsable des Annonces</h3>
-        <p id="annoncesName">Moïse Mbiye</p>
+        <p id="annoncesName">Moïse Mbuyu</p>
       </div>
     </section>
 
@@ -242,7 +256,7 @@
         </form>
       </section>
 
-      <!-- 3. Publication d'Annonces / Photos (Avec Option Anonyme) -->
+      <!-- 3. Publication d'Annonces / Photos -->
       <section class="admin-card">
         <h2>📸 Publication d'Annonces & Photos</h2>
         <form id="uploadForm" role="form" novalidate>
@@ -298,7 +312,7 @@
       </div>
     </section>
 
-    <!-- Planning des Cultes (Jour | Activité | Heure) -->
+    <!-- Planning des Cultes -->
     <section class="table-container">
       <div class="table-title"><strong>Planning des Activités & Cultes</strong></div>
       <table>
@@ -335,6 +349,9 @@
 
   <script>
     (function(){
+      // Connexion au serveur WebSockets Render
+      const socket = io("https://backend-lxod.onrender.com");
+
       const ADMIN_PASSWORD = "1234"; 
 
       const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -348,10 +365,10 @@
       const fileInput = document.getElementById('fileInput');
       const tiktokFeed = document.getElementById('tiktokFeed');
       const scheduleBody = document.getElementById('scheduleBody');
+      const onlineCountEl = document.getElementById('onlineCount');
 
       let isLoggedIn = false;
 
-      // Planning des activités sans la clé 'type'
       let defaultSchedule = [
         { day: "Lundi", activity: "Intercession", hour: "À préciser" },
         { day: "Mardi", activity: "Répétition", hour: "À préciser" },
@@ -373,6 +390,23 @@
 
       loadSettings();
       renderSchedule();
+
+      // Écoute du nombre de personnes en ligne envoyée par Node.js
+      socket.on("users:count", (count) => {
+        if (onlineCountEl) {
+          onlineCountEl.innerText = count;
+        }
+      });
+
+      // Écoute des mises à jour globales transmises via WebSocket
+      socket.on("client:update", (data) => {
+        if(data.type === 'settings') {
+          applySettings(data.payload);
+        } else if(data.type === 'schedule') {
+          localStorage.setItem('siteSchedule', JSON.stringify(data.payload));
+          renderSchedule();
+        }
+      });
 
       // Authentification
       authBtn.addEventListener('click', function(){
@@ -400,24 +434,18 @@
       settingsForm.addEventListener('submit', function(e){
         e.preventDefault();
 
-        const title = document.getElementById('inputSiteTitle').value;
-        const bio = document.getElementById('inputSiteBio').value;
-        const verse = document.getElementById('inputSiteVerse').value;
-        const admin = document.getElementById('inputAdminName').value;
-        const annonces = document.getElementById('inputAnnoncesName').value;
+        const settingsData = {
+          title: document.getElementById('inputSiteTitle').value,
+          bio: document.getElementById('inputSiteBio').value,
+          verse: document.getElementById('inputSiteVerse').value,
+          admin: document.getElementById('inputAdminName').value,
+          annonces: document.getElementById('inputAnnoncesName').value
+        };
 
-        document.getElementById('siteTitle').innerText = title;
-        document.getElementById('siteBio').innerText = bio;
-        document.getElementById('siteVerse').innerText = verse;
-        document.getElementById('adminName').innerText = admin;
-        document.getElementById('annoncesName').innerText = annonces;
+        applySettings(settingsData);
+        saveSettingsToStorage(settingsData);
 
-        localStorage.setItem('siteTitle', title);
-        localStorage.setItem('siteBio', bio);
-        localStorage.setItem('siteVerse', verse);
-        localStorage.setItem('adminName', admin);
-        localStorage.setItem('annoncesName', annonces);
-
+        socket.emit("admin:update", { type: 'settings', payload: settingsData });
         showToast("Paramètres généraux mis à jour !");
       });
 
@@ -440,6 +468,8 @@
 
         localStorage.setItem('siteSchedule', JSON.stringify(currentSchedule));
         renderSchedule();
+
+        socket.emit("admin:update", { type: 'schedule', payload: currentSchedule });
         showToast("Planning mis à jour pour " + currentSchedule[dayIdx].day + " !");
       });
 
@@ -462,30 +492,39 @@
         });
       }
 
-      function loadSettings(){
-        if(localStorage.getItem('siteTitle')) {
-          document.getElementById('siteTitle').innerText = localStorage.getItem('siteTitle');
-          document.getElementById('inputSiteTitle').value = localStorage.getItem('siteTitle');
-        }
-        if(localStorage.getItem('siteBio')) {
-          document.getElementById('siteBio').innerText = localStorage.getItem('siteBio');
-          document.getElementById('inputSiteBio').value = localStorage.getItem('siteBio');
-        }
-        if(localStorage.getItem('siteVerse')) {
-          document.getElementById('siteVerse').innerText = localStorage.getItem('siteVerse');
-          document.getElementById('inputSiteVerse').value = localStorage.getItem('siteVerse');
-        }
-        if(localStorage.getItem('adminName')) {
-          document.getElementById('adminName').innerText = localStorage.getItem('adminName');
-          document.getElementById('inputAdminName').value = localStorage.getItem('adminName');
-        }
-        if(localStorage.getItem('annoncesName')) {
-          document.getElementById('annoncesName').innerText = localStorage.getItem('annoncesName');
-          document.getElementById('inputAnnoncesName').value = localStorage.getItem('annoncesName');
-        }
+      function applySettings(data){
+        if(data.title) document.getElementById('siteTitle').innerText = data.title;
+        if(data.bio) document.getElementById('siteBio').innerText = data.bio;
+        if(data.verse) document.getElementById('siteVerse').innerText = data.verse;
+        if(data.admin) document.getElementById('adminName').innerText = data.admin;
+        if(data.annonces) document.getElementById('annoncesName').innerText = data.annonces;
       }
 
-      // Envoi de photos (avec prise en charge du mode anonyme)
+      function saveSettingsToStorage(data){
+        localStorage.setItem('siteTitle', data.title);
+        localStorage.setItem('siteBio', data.bio);
+        localStorage.setItem('siteVerse', data.verse);
+        localStorage.setItem('adminName', data.admin);
+        localStorage.setItem('annoncesName', data.annonces);
+      }
+
+      function loadSettings(){
+        const data = {
+          title: localStorage.getItem('siteTitle'),
+          bio: localStorage.getItem('siteBio'),
+          verse: localStorage.getItem('siteVerse'),
+          admin: localStorage.getItem('adminName'),
+          annonces: localStorage.getItem('annoncesName')
+        };
+        applySettings(data);
+        if(data.title) document.getElementById('inputSiteTitle').value = data.title;
+        if(data.bio) document.getElementById('inputSiteBio').value = data.bio;
+        if(data.verse) document.getElementById('inputSiteVerse').value = data.verse;
+        if(data.admin) document.getElementById('inputAdminName').value = data.admin;
+        if(data.annonces) document.getElementById('inputAnnoncesName').value = data.annonces;
+      }
+
+      // Envoi de photos (avec mode anonyme)
       uploadForm.addEventListener('submit', function(e){
         e.preventDefault();
 
@@ -519,7 +558,6 @@
         const overlay = document.createElement('div');
         overlay.className = 'tiktok-overlay';
 
-        // Si l'auteur n'est pas vide (non-anonyme), on l'affiche
         if (author !== '') {
           const h3 = document.createElement('h3');
           h3.textContent = author;
@@ -556,6 +594,258 @@
       });
 
     })();
+    (function(){
+  // Connexion au serveur WebSockets Render
+  const socket = io("https://backend-lxod.onrender.com");
+
+  const ADMIN_PASSWORD = "1234"; 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB max
+
+  const authBtn = document.getElementById('authBtn');
+  const adminPanel = document.getElementById('adminPanel');
+  const settingsForm = document.getElementById('settingsForm');
+  const scheduleForm = document.getElementById('scheduleForm');
+  const uploadForm = document.getElementById('uploadForm');
+  const authorSelect = document.getElementById('authorSelect');
+  const descriptionInput = document.getElementById('descriptionInput');
+  const fileInput = document.getElementById('fileInput');
+  const tiktokFeed = document.getElementById('tiktokFeed');
+  const scheduleBody = document.getElementById('scheduleBody');
+  const onlineCountEl = document.getElementById('onlineCount');
+
+  let isLoggedIn = false;
+
+  let defaultSchedule = [
+    { day: "Lundi", activity: "Intercession", hour: "17H00-18H00" },
+    { day: "Mardi", activity: "Répétition", hour: "À préciser" },
+    { day: "Mercredi", activity: "Cultes", hour: "16h30 à 18h30" },
+    { day: "Jeudi", activity: "Répétition", hour: "À préciser" },
+    { day: "Vendredi", activity: "Culte d'Enseignement / Prière", hour: "16h00 - 18h00" },
+    { day: "Samedi", activity: "Répétition Générale", hour: "À partir de 15h00" },
+    { day: "Dimanche", activity: "Grand Culte Dominical", hour: "08h00 - 12h00" }
+  ];
+
+  function showToast(message, type = 'success'){
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type === 'error' ? 'toast--error' : 'toast--success');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(()=> { toast.style.opacity = '0'; }, 2600);
+    setTimeout(()=> { toast.remove(); }, 3000);
+  }
+
+  loadSettings();
+  renderSchedule();
+
+  // 1. Écoute du nombre de personnes en ligne
+  socket.on("users:count", (count) => {
+    if (onlineCountEl) onlineCountEl.innerText = count;
+  });
+
+  // 2. Écoute des réglages et du planning mis à jour
+  socket.on("client:update", (data) => {
+    if(data.type === 'settings') {
+      applySettings(data.payload);
+    } else if(data.type === 'schedule') {
+      localStorage.setItem('siteSchedule', JSON.stringify(data.payload));
+      renderSchedule();
+    }
+  });
+
+  // 3. Écoute de la réception d'une nouvelle photo publiée par l'admin
+  socket.on("client:new_post", (postData) => {
+    ajouterPhotoAuFil(postData.author, postData.description, postData.imageSrc, postData.time);
+  });
+
+  // Fonction pour afficher une photo dans le fil d'annonces
+  function ajouterPhotoAuFil(author, description, imageSrc, timeString){
+    const slide = document.createElement('div');
+    slide.className = 'tiktok-slide';
+
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.alt = 'Publication';
+    img.loading = 'lazy';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tiktok-overlay';
+
+    if (author && author !== '') {
+      const h3 = document.createElement('h3');
+      h3.textContent = author;
+      overlay.appendChild(h3);
+    }
+
+    const p = document.createElement('p');
+    if(description && description.length > 0){
+      const parts = description.split(/\r?\n/);
+      parts.forEach((line, idx) => {
+        p.appendChild(document.createTextNode(line));
+        if(idx < parts.length - 1) p.appendChild(document.createElement('br'));
+      });
+    }
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time-badge';
+    timeSpan.textContent = 'Publié à ' + timeString;
+
+    overlay.appendChild(p);
+    overlay.appendChild(timeSpan);
+
+    slide.appendChild(img);
+    slide.appendChild(overlay);
+
+    // Ajoute la photo au tout début du fil
+    tiktokFeed.insertBefore(slide, tiktokFeed.firstChild);
+    tiktokFeed.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Connexion Administrateur
+  authBtn.addEventListener('click', function(){
+    if(!isLoggedIn){
+      const pass = prompt("Saisissez le mot de passe Administrateur :");
+      if(pass === ADMIN_PASSWORD){
+        isLoggedIn = true;
+        adminPanel.style.display = 'block';
+        authBtn.textContent = "🔓 Déconnexion Admin";
+        authBtn.classList.add('logout');
+        showToast("Accès administrateur déverrouillé.");
+      } else if(pass !== null){
+        showToast("Mot de passe incorrect.", "error");
+      }
+    } else {
+      isLoggedIn = false;
+      adminPanel.style.display = 'none';
+      authBtn.textContent = "🔒 Accès Administrateur";
+      authBtn.classList.remove('logout');
+      showToast("Déconnecté.");
+    }
+  });
+
+  // Soumission du formulaire de publication de photo
+  uploadForm.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const author = (authorSelect.value || '').trim();
+    const description = (descriptionInput.value || '').trim();
+    const file = fileInput.files && fileInput.files[0];
+
+    if(!file){
+      showToast('Veuillez sélectionner une image.', 'error');
+      return;
+    }
+    if(file.size > MAX_FILE_SIZE){
+      showToast('Image trop volumineuse (max 5 MB).', 'error');
+      return;
+    }
+
+    // Lecture du fichier image et conversion en DataURL (base64) pour envoi via Socket.io
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const imageBase64 = evt.target.result;
+      const now = new Date();
+      const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+      const payload = {
+        author: author,
+        description: description,
+        imageSrc: imageBase64,
+        time: timeStr
+      };
+
+      // Envoi de la photo au serveur Render
+      socket.emit("admin:new_post", payload);
+
+      descriptionInput.value = '';
+      try { fileInput.value = ''; } catch(err){}
+      showToast('Photo publiée avec succès !');
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  // Gestion du planning et réglages
+  settingsForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const settingsData = {
+      title: document.getElementById('inputSiteTitle').value,
+      bio: document.getElementById('inputSiteBio').value,
+      verse: document.getElementById('inputSiteVerse').value,
+      admin: document.getElementById('inputAdminName').value,
+      annonces: document.getElementById('inputAnnoncesName').value
+    };
+    applySettings(settingsData);
+    saveSettingsToStorage(settingsData);
+    socket.emit("admin:update", { type: 'settings', payload: settingsData });
+    showToast("Paramètres généraux mis à jour !");
+  });
+
+  scheduleForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const dayIdx = parseInt(document.getElementById('selectDay').value, 10);
+    const activity = document.getElementById('inputActivity').value.trim();
+    const hour = document.getElementById('inputHour').value.trim();
+    if(!activity || !hour){
+      showToast("Veuillez remplir l'activité et l'horaire.", "error");
+      return;
+    }
+    let currentSchedule = getScheduleData();
+    currentSchedule[dayIdx].activity = activity;
+    currentSchedule[dayIdx].hour = hour;
+    localStorage.setItem('siteSchedule', JSON.stringify(currentSchedule));
+    renderSchedule();
+    socket.emit("admin:update", { type: 'schedule', payload: currentSchedule });
+    showToast("Planning mis à jour pour " + currentSchedule[dayIdx].day + " !");
+  });
+
+  function getScheduleData(){
+    const saved = localStorage.getItem('siteSchedule');
+    return saved ? JSON.parse(saved) : defaultSchedule;
+  }
+
+  function renderSchedule(){
+    const data = getScheduleData();
+    scheduleBody.innerHTML = '';
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><strong>${item.day}</strong></td><td>${item.activity}</td><td>${item.hour}</td>`;
+      scheduleBody.appendChild(tr);
+    });
+  }
+
+  function applySettings(data){
+    if(data.title) document.getElementById('siteTitle').innerText = data.title;
+    if(data.bio) document.getElementById('siteBio').innerText = data.bio;
+    if(data.verse) document.getElementById('siteVerse').innerText = data.verse;
+    if(data.admin) document.getElementById('adminName').innerText = data.admin;
+    if(data.annonces) document.getElementById('annoncesName').innerText = data.annonces;
+  }
+
+  function saveSettingsToStorage(data){
+    localStorage.setItem('siteTitle', data.title);
+    localStorage.setItem('siteBio', data.bio);
+    localStorage.setItem('siteVerse', data.verse);
+    localStorage.setItem('adminName', data.admin);
+    localStorage.setItem('annoncesName', data.annonces);
+  }
+
+  function loadSettings(){
+    const data = {
+      title: localStorage.getItem('siteTitle'),
+      bio: localStorage.getItem('siteBio'),
+      verse: localStorage.getItem('siteVerse'),
+      admin: localStorage.getItem('adminName'),
+      annonces: localStorage.getItem('annoncesName')
+    };
+    applySettings(data);
+    if(data.title) document.getElementById('inputSiteTitle').value = data.title;
+    if(data.bio) document.getElementById('inputSiteBio').value = data.bio;
+    if(data.verse) document.getElementById('inputSiteVerse').value = data.verse;
+    if(data.admin) document.getElementById('inputAdminName').value = data.admin;
+    if(data.annonces) document.getElementById('inputAnnoncesName').value = data.annonces;
+  }
+
+})();
   </script>
 </body>
 </html>
