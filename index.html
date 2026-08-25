@@ -49,10 +49,12 @@
     /* Bloc Administrateur (Masqué par défaut) */
     .admin-only{display:none}
 
-    .admin-card{background:var(--dark-surface);border:2px dashed var(--primary-500);border-radius:var(--radius-md);padding:25px;box-shadow:var(--shadow-soft)}
+    .admin-card{background:var(--dark-surface);border:2px dashed var(--primary-500);border-radius:var(--radius-md);padding:25px;box-shadow:var(--shadow-soft);margin-bottom:25px}
     .admin-card.settings-card{border-color:var(--badge-priere)}
+    .admin-card.schedule-card{border-color:var(--badge-culte)}
     .admin-card h2{font-size:1.3rem;color:var(--primary-500);margin-bottom:20px;display:flex;align-items:center;gap:10px}
     .admin-card.settings-card h2{color:var(--badge-priere)}
+    .admin-card.schedule-card h2{color:var(--badge-culte)}
 
     .form-grid{display:grid;grid-template-columns:1fr;gap:15px}
     .form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;color:var(--text-muted)}
@@ -63,6 +65,8 @@
     .btn-publish:hover{background:var(--primary-500)}.btn-publish:active{transform:scale(.99)}
     .btn-settings{background:var(--badge-priere)}
     .btn-settings:hover{background:#b45309}
+    .btn-schedule{background:var(--badge-culte)}
+    .btn-schedule:hover{background:#0f766e}
 
     /* Fil TikTok / Publications */
     .tiktok-section-header{text-align:center;margin-bottom:15px}
@@ -92,8 +96,8 @@
     .badge{padding:4px 10px;border-radius:12px;font-size:.75rem;font-weight:700;text-transform:uppercase;color:#fff}
     .priere{background:var(--badge-priere)}.culte{background:var(--badge-culte)}.repetition{background:var(--badge-repetition)}
 
-    .tiktok-official-card{background:var(--dark-card);border-radius:var(--radius-md);padding:20px;text-align:center;border:1px solid var(--dark-border)}
-    .tiktok-official-card h2{font-size:1.2rem;color:var(--primary-500);margin-bottom:15px}
+    .tiktok-official-card{background:var(--dark-card);border-radius:var(--radius-md);padding:25px 20px;text-align:center;border:1px solid var(--dark-border)}
+    .tiktok-official-card h2{font-size:1.2rem;color:var(--primary-500);margin-bottom:10px}
 
     footer{text-align:center;padding:20px 0;color:var(--text-muted);font-size:.85rem;border-top:1px solid var(--dark-border);margin-top:20px}
 
@@ -137,8 +141,8 @@
     <div id="adminPanel" class="admin-only">
       
       <!-- 1. Modification des Réglages du Site -->
-      <section class="admin-card settings-card" style="margin-bottom: 25px;">
-        <h2>Configuration & Paramètres du Site</h2>
+      <section class="admin-card settings-card">
+        <h2>⚙️ Configuration Générales du Site</h2>
         <form id="settingsForm">
           <div class="form-grid">
             <div class="form-group">
@@ -162,13 +166,51 @@
               <input type="text" id="inputAnnoncesName" value="Moïse Mbiye">
             </div>
           </div>
-          <button type="submit" class="btn-publish btn-settings">Enregistrer les Paramètres</button>
+          <button type="submit" class="btn-publish btn-settings">Enregistrer les Réglages Principaux</button>
         </form>
       </section>
 
-      <!-- 2. Publication d'Images / Annonces -->
+      <!-- 2. Modification du Planning des Cultes -->
+      <section class="admin-card schedule-card">
+        <h2>📅 Modification du Planning des Cultes</h2>
+        <form id="scheduleForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="selectDay">Sélectionner le jour à modifier :</label>
+              <select id="selectDay">
+                <option value="0">Lundi</option>
+                <option value="1">Mardi</option>
+                <option value="2">Mercredi</option>
+                <option value="3">Jeudi</option>
+                <option value="4">Vendredi</option>
+                <option value="5">Samedi</option>
+                <option value="6">Dimanche</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="inputActivity">Nom de l'activité :</label>
+              <input type="text" id="inputActivity" placeholder="Ex: Culte de Semaine">
+            </div>
+            <div class="form-group">
+              <label for="selectType">Type d'activité (Badge) :</label>
+              <select id="selectType">
+                <option value="priere">Prière (Orange)</option>
+                <option value="culte">Culte (Vert)</option>
+                <option value="repetition">Répétition (Violet)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="inputHour">Horaire :</label>
+              <input type="text" id="inputHour" placeholder="Ex: 16h00 - 18h00">
+            </div>
+          </div>
+          <button type="submit" class="btn-publish btn-schedule">Mettre à jour ce jour dans le planning</button>
+        </form>
+      </section>
+
+      <!-- 3. Publication d'Images / Annonces -->
       <section class="admin-card">
-        <h2>Publication d'Annonces & Visuels</h2>
+        <h2>📸 Publication d'Annonces & Photos</h2>
         <form id="uploadForm" role="form" novalidate>
           <div class="form-grid">
             <div class="form-group">
@@ -230,25 +272,25 @@
         <thead>
           <tr><th>Jour</th><th>Activité</th><th>Type</th><th>Heure</th></tr>
         </thead>
-        <tbody>
-          <tr><td><strong>Lundi</strong></td><td>Intercession</td><td><span class="badge priere">Prière</span></td><td>À préciser</td></tr>
-          <tr><td><strong>Mardi</strong></td><td>Répétition</td><td><span class="badge repetition">Répétition</span></td><td>À préciser</td></tr>
-          <tr><td><strong>Mercredi</strong></td><td>Culte de Semaine</td><td><span class="badge culte">Culte</span></td><td>16h00 - 18h00</td></tr>
-          <tr><td><strong>Jeudi</strong></td><td>Répétition</td><td><span class="badge repetition">Répétition</span></td><td>À préciser</td></tr>
-          <tr><td><strong>Vendredi</strong></td><td>Culte d'Enseignement / Prière</td><td><span class="badge culte">Culte</span></td><td>16h00 - 18h00</td></tr>
-          <tr><td><strong>Samedi</strong></td><td>Répétition Générale</td><td><span class="badge repetition">Répétition</span></td><td>À partir de 15h00</td></tr>
-          <tr><td><strong>Dimanche</strong></td><td>Grand Culte Dominical</td><td><span class="badge culte">Culte</span></td><td>08h00 - 12h00</td></tr>
+        <tbody id="scheduleBody">
+          <!-- Données chargées dynamiquement -->
         </tbody>
       </table>
     </section>
 
-    <!-- Intégration TikTok -->
+    <!-- Profil TikTok Officiel (Bouton d'accès direct sans blocage) -->
     <section class="tiktok-official-card">
       <h2>Profil TikTok Officiel de l'Église</h2>
-      <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@glise.nouvelle.al7" data-unique-id="glise.nouvelle.al7" data-embed-type="creator" style="max-width:100%">
-        <section><a target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@glise.nouvelle.al7">@glise.nouvelle.al7</a></section>
-      </blockquote>
-      <script async src="https://www.tiktok.com/embed.js" defer></script>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
+        Rejoignez-nous sur TikTok pour suivre nos directs et vidéos !
+      </p>
+      <a href="https://www.tiktok.com/@glise.nouvelle.al7" target="_blank" rel="noopener noreferrer" 
+         style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #000; color: #fff; padding: 12px 24px; border-radius: 30px; text-decoration: none; font-weight: 700; border: 1px solid var(--primary-500); box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.35 22a6.33 6.33 0 0 0 6.33-6.33V8.87a8.16 8.16 0 0 0 4.91 1.6V7a4.82 4.82 0 0 1-1-.31z"/>
+        </svg>
+        Suivre @glise.nouvelle.al7 sur TikTok
+      </a>
     </section>
 
     <footer>&copy; 2026 Église Nouvelle Alliance - Tous droits réservés. Administration : Prophète Victor & Moïse Mbiye.</footer>
@@ -256,21 +298,33 @@
 
   <script>
     (function(){
-      // MOT DE PASSE POUR ACCEDER A L'ADMINISTRATION
+      // MOT DE PASSE ADMINISTRATEUR
       const ADMIN_PASSWORD = "1234"; 
 
       const MAX_FILE_SIZE = 5 * 1024 * 1024;
       const authBtn = document.getElementById('authBtn');
       const adminPanel = document.getElementById('adminPanel');
       const settingsForm = document.getElementById('settingsForm');
+      const scheduleForm = document.getElementById('scheduleForm');
       const uploadForm = document.getElementById('uploadForm');
       const authorSelect = document.getElementById('authorSelect');
       const descriptionInput = document.getElementById('descriptionInput');
       const fileInput = document.getElementById('fileInput');
       const tiktokFeed = document.getElementById('tiktokFeed');
-      const liveRegion = document.getElementById('liveRegion');
+      const scheduleBody = document.getElementById('scheduleBody');
 
       let isLoggedIn = false;
+
+      // Données par défaut du planning
+      let defaultSchedule = [
+        { day: "Lundi", activity: "Intercession", type: "priere", hour: "À préciser" },
+        { day: "Mardi", activity: "Répétition", type: "repetition", hour: "À préciser" },
+        { day: "Mercredi", activity: "Culte de Semaine", type: "culte", hour: "16h00 - 18h00" },
+        { day: "Jeudi", activity: "Répétition", type: "repetition", hour: "À préciser" },
+        { day: "Vendredi", activity: "Culte d'Enseignement / Prière", type: "culte", hour: "16h00 - 18h00" },
+        { day: "Samedi", activity: "Répétition Générale", type: "repetition", hour: "À partir de 15h00" },
+        { day: "Dimanche", activity: "Grand Culte Dominical", type: "culte", hour: "08h00 - 12h00" }
+      ];
 
       function showToast(message, type = 'success'){
         const toast = document.createElement('div');
@@ -281,9 +335,11 @@
         setTimeout(()=> { toast.remove(); }, 3000);
       }
 
+      // Initialisation
       loadSettings();
+      renderSchedule();
 
-      // Gestion de la Connexion Administrateur
+      // Authentification
       authBtn.addEventListener('click', function(){
         if(!isLoggedIn){
           const pass = prompt("Saisissez le mot de passe Administrateur :");
@@ -305,7 +361,7 @@
         }
       });
 
-      // Sauvegarde des paramètres du site dans le navigateur
+      // Sauvegarde des réglages généraux
       settingsForm.addEventListener('submit', function(e){
         e.preventDefault();
 
@@ -327,8 +383,54 @@
         localStorage.setItem('adminName', admin);
         localStorage.setItem('annoncesName', annonces);
 
-        showToast("Paramètres du site mis à jour !");
+        showToast("Paramètres généraux mis à jour !");
       });
+
+      // Modification du planning
+      scheduleForm.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        const dayIdx = parseInt(document.getElementById('selectDay').value, 10);
+        const activity = document.getElementById('inputActivity').value.trim();
+        const type = document.getElementById('selectType').value;
+        const hour = document.getElementById('inputHour').value.trim();
+
+        if(!activity || !hour){
+          showToast("Veuillez remplir l'activité et l'horaire.", "error");
+          return;
+        }
+
+        let currentSchedule = getScheduleData();
+        currentSchedule[dayIdx].activity = activity;
+        currentSchedule[dayIdx].type = type;
+        currentSchedule[dayIdx].hour = hour;
+
+        localStorage.setItem('siteSchedule', JSON.stringify(currentSchedule));
+        renderSchedule();
+        showToast("Planning mis à jour pour " + currentSchedule[dayIdx].day + " !");
+      });
+
+      function getScheduleData(){
+        const saved = localStorage.getItem('siteSchedule');
+        return saved ? JSON.parse(saved) : defaultSchedule;
+      }
+
+      function renderSchedule(){
+        const data = getScheduleData();
+        scheduleBody.innerHTML = '';
+        data.forEach(item => {
+          const tr = document.createElement('tr');
+          const typeLabel = item.type === 'priere' ? 'Prière' : (item.type === 'culte' ? 'Culte' : 'Répétition');
+          
+          tr.innerHTML = `
+            <td><strong>${item.day}</strong></td>
+            <td>${item.activity}</td>
+            <td><span class="badge ${item.type}">${typeLabel}</span></td>
+            <td>${item.hour}</td>
+          `;
+          scheduleBody.appendChild(tr);
+        });
+      }
 
       function loadSettings(){
         if(localStorage.getItem('siteTitle')) {
@@ -353,7 +455,7 @@
         }
       }
 
-      // Envoi des photos dans le fil
+      // Envoi de photos
       uploadForm.addEventListener('submit', function(e){
         e.preventDefault();
 
